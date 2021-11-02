@@ -25,6 +25,7 @@ int main() {
 
 	printf("%f\n", varr_get(&varray, 6)); // 10.5
 
+	// Values get pulled from the right at deletion
 	varr_remove(&varray, 6);
 
 	printf("%f\n", varr_get(&varray, 6)); // 12.0
