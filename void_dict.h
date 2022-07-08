@@ -41,15 +41,15 @@ struct void_dict {
     /** byte array of all stored values */
     unsigned char* value_bytes;
     /** sorted array which holds all stored hashes */
-    DICT_SIZE_TYPE* hashes;
+    VDICT_SIZE_TYPE* hashes;
     /** amount of currently stored key-value pairs */
-    DICT_SIZE_TYPE size;
+    VDICT_SIZE_TYPE size;
     /** size of keys in bytes */
-    DICT_SIZE_TYPE key_size;
+    VDICT_SIZE_TYPE key_size;
     /** size of values in bytes */
-    DICT_SIZE_TYPE value_size;
+    VDICT_SIZE_TYPE value_size;
     /** range of hashes */
-    DICT_SIZE_TYPE hash_pool;
+    VDICT_SIZE_TYPE hash_pool;
     /** free function for recursive freeing on each value */
     void(*value_free_fn)(void*);
 };
@@ -61,12 +61,12 @@ struct void_dict {
  * @param key Key to build hash of
  * @return Hash in Hash-Pool
  */
-DICT_SIZE_TYPE vdict_hash(const struct void_dict* vdict, const void* key) {
+inline VDICT_SIZE_TYPE vdict_hash(const struct void_dict* vdict, const void* key) {
     const unsigned char* data = (const unsigned char*)key;
     unsigned char byte;
-    DICT_SIZE_TYPE hash = 5381;
+    VDICT_SIZE_TYPE hash = 5381;
 
-    for (DICT_SIZE_TYPE i = 0; i < vdict->key_size; i++) {
+    for (VDICT_SIZE_TYPE i = 0; i < vdict->key_size; i++) {
         if ((byte = *(data + i))) {
             hash = ((hash << 5) + hash) ^ byte;
         }
@@ -83,11 +83,11 @@ DICT_SIZE_TYPE vdict_hash(const struct void_dict* vdict, const void* key) {
  * @param idx Index of found Hash or last searched index
  * @return Pointer to found hash or NULL
  */
-DICT_SIZE_TYPE* vdict_hash_bsearch(const struct void_dict* vdict, const DICT_SIZE_TYPE hash, DICT_SIZE_TYPE* idx) {
-    DICT_SIZE_TYPE* needle = NULL;
-    DICT_SIZE_TYPE needle_idx = 0;
+inline VDICT_SIZE_TYPE* vdict_hash_bsearch(const struct void_dict* vdict, const VDICT_SIZE_TYPE hash, VDICT_SIZE_TYPE* idx) {
+    VDICT_SIZE_TYPE* needle = NULL;
+    VDICT_SIZE_TYPE needle_idx = 0;
     if (vdict->size) {
-        DICT_SIZE_TYPE f_idx = 0, l_idx = vdict->size - 1;
+        VDICT_SIZE_TYPE f_idx = 0, l_idx = vdict->size - 1;
         while (f_idx <= l_idx) {
             needle_idx = (f_idx + l_idx) >> 1;
             if (vdict->hashes[needle_idx] < hash && needle_idx != 0) {
@@ -117,14 +117,14 @@ DICT_SIZE_TYPE* vdict_hash_bsearch(const struct void_dict* vdict, const DICT_SIZ
  * @param value Value to Add
  * @return Error Code
  */
-int vdict_add_pair(struct void_dict* vdict, void* key, void* value) {
+inline int vdict_add_pair(struct void_dict* vdict, void* key, void* value) {
     if (vdict->size == vdict->hash_pool) {
         return VDICT_ERROR ^ VDICT_FULL;
     } else if (memcmp(key, vdict->key_zero_field, vdict->key_size) == 0) {
         return VDICT_ERROR ^ VDICT_ZERO_KEY;
     }
-    DICT_SIZE_TYPE hash = vdict_hash(vdict, key);
-    DICT_SIZE_TYPE needle_idx;
+    VDICT_SIZE_TYPE hash = vdict_hash(vdict, key);
+    VDICT_SIZE_TYPE needle_idx;
     while (vdict_hash_bsearch(vdict, hash, &needle_idx)) {
         hash = (hash + 1) % vdict->hash_pool;
     }
@@ -132,7 +132,7 @@ int vdict_add_pair(struct void_dict* vdict, void* key, void* value) {
     memcpy(vdict->value_bytes + hash * vdict->value_size, value, vdict->value_size);
     if (vdict->size && vdict->hashes[needle_idx] < hash) needle_idx = (needle_idx + 1) % vdict->hash_pool;
     memmove(vdict->hashes + needle_idx + 1, vdict->hashes + needle_idx,
-            sizeof(DICT_SIZE_TYPE) * (vdict->size - needle_idx));
+            sizeof(VDICT_SIZE_TYPE) * (vdict->size - needle_idx));
     vdict->hashes[needle_idx] = hash;
     vdict->size++;
     return VDICT_SUCCESS;
@@ -145,11 +145,11 @@ int vdict_add_pair(struct void_dict* vdict, void* key, void* value) {
  * @param key Key to get Value with
  * @return Pointer to Value (NULL if idx out of range)
  */
-void* vdict_get_value(const struct void_dict* vdict, const void* key) {
-    DICT_SIZE_TYPE hash = vdict_hash(vdict, key);
+inline void* vdict_get_value(const struct void_dict* vdict, const void* key) {
+    VDICT_SIZE_TYPE hash = vdict_hash(vdict, key);
     if (vdict->size && vdict_hash_bsearch(vdict, hash, NULL)) {
         unsigned char found = 0;
-        DICT_SIZE_TYPE checked = 0;
+        VDICT_SIZE_TYPE checked = 0;
         while (!found && checked < vdict->size) {
             if (memcmp(vdict->key_bytes + vdict->key_size * hash, vdict->key_zero_field, vdict->key_size) == 0) {
                 break;
@@ -176,9 +176,9 @@ void* vdict_get_value(const struct void_dict* vdict, const void* key) {
  * @param key_array Array to store keys into
  * @return key_array
  */
-void* vdict_get_keys(const struct void_dict* vdict, void* key_array) {
+inline void* vdict_get_keys(const struct void_dict* vdict, void* key_array) {
     unsigned char* byte_key_array = (unsigned char*)key_array;
-    for (DICT_SIZE_TYPE i = 0; i < vdict->size; i++) {
+    for (VDICT_SIZE_TYPE i = 0; i < vdict->size; i++) {
         memcpy(byte_key_array + (vdict->key_size * i), vdict->key_bytes + (vdict->key_size * vdict->hashes[i]), vdict->key_size);
     }
     return key_array;
@@ -191,20 +191,20 @@ void* vdict_get_keys(const struct void_dict* vdict, void* key_array) {
  * @param key Key of key-value pair to be deleted
  * @return Error Code
  */
-int vdict_del_pair(struct void_dict* vdict, const void* key) {
+inline int vdict_del_pair(struct void_dict* vdict, const void* key) {
     unsigned char* value_ptr = (unsigned char*)vdict_get_value(vdict, key);
     if (value_ptr) {
-        DICT_SIZE_TYPE hash = (value_ptr + vdict->value_size - vdict->value_bytes) / vdict->key_size;
+        VDICT_SIZE_TYPE hash = (value_ptr + vdict->value_size - vdict->value_bytes) / vdict->key_size;
         memset(vdict->key_bytes + vdict->key_size * hash, 0, vdict->key_size);
         if (vdict->value_free_fn) {
             vdict->value_free_fn(vdict->value_bytes + vdict->value_size * hash);
         }
         memset(vdict->value_bytes + vdict->value_size * hash, 0, vdict->value_size);
-        DICT_SIZE_TYPE hash_idx;
-        DICT_SIZE_TYPE* hash_ptr = vdict_hash_bsearch(vdict, hash, &hash_idx);
+        VDICT_SIZE_TYPE hash_idx;
+        VDICT_SIZE_TYPE* hash_ptr = vdict_hash_bsearch(vdict, hash, &hash_idx);
         memmove(hash_ptr, hash_ptr + 1,
-                sizeof(DICT_SIZE_TYPE) * (vdict->size - hash_idx));
-        memset(vdict->hashes + vdict->size, 0, sizeof(DICT_SIZE_TYPE));
+                sizeof(VDICT_SIZE_TYPE) * (vdict->size - hash_idx));
+        memset(vdict->hashes + vdict->size, 0, sizeof(VDICT_SIZE_TYPE));
         vdict->size--;
         return VDICT_SUCCESS;
     } else {
@@ -219,16 +219,16 @@ int vdict_del_pair(struct void_dict* vdict, const void* key) {
  * @param vdict Void Dict to be cleared
  * @return Error Code
  */
-int vdict_clear(struct void_dict* vdict) {
+inline int vdict_clear(struct void_dict* vdict) {
     if (vdict) {
         memset(vdict->key_bytes, 0, vdict->key_size * vdict->hash_pool);
         if (vdict->value_free_fn) {
-            for (DICT_SIZE_TYPE hash_idx = 0; hash_idx < vdict->size; hash_idx++) {
+            for (VDICT_SIZE_TYPE hash_idx = 0; hash_idx < vdict->size; hash_idx++) {
                 vdict->value_free_fn(vdict->value_bytes + vdict->value_size * vdict->hashes[hash_idx]);
             }
         }
         memset(vdict->value_bytes, 0, vdict->value_size * vdict->hash_pool);
-        memset(vdict->hashes, 0, sizeof(DICT_SIZE_TYPE) * vdict->size);
+        memset(vdict->hashes, 0, sizeof(VDICT_SIZE_TYPE) * vdict->size);
         vdict->size = 0;
         return VDICT_SUCCESS;
     }
@@ -245,12 +245,12 @@ int vdict_clear(struct void_dict* vdict) {
  * @param value_free_fn Function to be called when freeing special datatypes (Nullable)
  * @return Error Code
  */
-int vdict_init(struct void_dict* vdict, DICT_SIZE_TYPE hash_pool, DICT_SIZE_TYPE key_size, DICT_SIZE_TYPE value_size, void(*value_free_fn)(void*)) {
+inline int vdict_init(struct void_dict* vdict, VDICT_SIZE_TYPE hash_pool, VDICT_SIZE_TYPE key_size, VDICT_SIZE_TYPE value_size, void(*value_free_fn)(void*)) {
     if (vdict) {
         vdict->key_bytes = (unsigned char*)calloc(key_size, hash_pool);
         vdict->key_zero_field = (unsigned char*)calloc(key_size, hash_pool);
         vdict->value_bytes = (unsigned char*)calloc(value_size, hash_pool);
-        vdict->hashes = (DICT_SIZE_TYPE*)calloc(sizeof(DICT_SIZE_TYPE), hash_pool);
+        vdict->hashes = (VDICT_SIZE_TYPE*)calloc(sizeof(VDICT_SIZE_TYPE), hash_pool);
         vdict->size = 0;
         vdict->key_size = key_size;
         vdict->value_size = value_size;
@@ -267,10 +267,10 @@ int vdict_init(struct void_dict* vdict, DICT_SIZE_TYPE hash_pool, DICT_SIZE_TYPE
  *
  * @param vdict_ptr Void Dict of which the content is to be freed
  */
-void vdict_free(void* vdict_ptr) {
+inline void vdict_free(void* vdict_ptr) {
     struct void_dict* vdict = (struct void_dict*)vdict_ptr;
     if (vdict->value_free_fn) {
-        for (DICT_SIZE_TYPE hash_idx = 0; hash_idx < vdict->size; hash_idx++) {
+        for (VDICT_SIZE_TYPE hash_idx = 0; hash_idx < vdict->size; hash_idx++) {
             vdict->value_free_fn(vdict->value_bytes + vdict->value_size * vdict->hashes[hash_idx]);
         }
     }

@@ -48,7 +48,7 @@ struct void_array {
  * 
  * @param varray Void Array to expand
  */
-void varr_expand(struct void_array* varray) {
+inline void varr_expand(struct void_array* varray) {
     unsigned char* tmp = varray->value_bytes;
     if ((SIZE_MAX >> 1) > varray->capacity) {
         varray->capacity = (varray->capacity << 1) + 1;
@@ -65,7 +65,7 @@ void varr_expand(struct void_array* varray) {
  * 
  * @param varray Void Array to shrink
  */
-void varr_shrink(struct void_array* varray) {
+inline void varr_shrink(struct void_array* varray) {
     unsigned char* tmp = varray->value_bytes;
     varray->capacity = varray->size;
     varray->value_bytes = (unsigned char*)calloc(varray->value_size, varray->capacity);
@@ -80,7 +80,7 @@ void varr_shrink(struct void_array* varray) {
  * @param value Value to be copied into Void Array
  * @return Error Code
  */
-int varr_add(struct void_array* varray, void* value) {
+inline int varr_add(struct void_array* varray, void* value) {
     if (varray) {
         if (varray->size == varray->capacity) {
             varr_expand(varray);
@@ -99,7 +99,7 @@ int varr_add(struct void_array* varray, void* value) {
  * @param idx Index of the Element
  * @return Pointer to Element (NULL if idx out of range)
  */
-void* varr_get(const struct void_array* varray, VARR_SIZE_TYPE idx) {
+inline void* varr_get(const struct void_array* varray, VARR_SIZE_TYPE idx) {
     if (idx < varray->size) {
         return varray->value_bytes + varray->value_size * idx;
     }
@@ -114,7 +114,7 @@ void* varr_get(const struct void_array* varray, VARR_SIZE_TYPE idx) {
  * @param idx Index of Element to be removed
  * @return Error Code
  */
-int varr_remove(struct void_array* varray, VARR_SIZE_TYPE idx) {
+inline int varr_remove(struct void_array* varray, VARR_SIZE_TYPE idx) {
     if (varray) {
         if (idx < varray->size) {
             if (varray->value_free_fn) {
@@ -140,7 +140,7 @@ int varr_remove(struct void_array* varray, VARR_SIZE_TYPE idx) {
  * @param varray Void Array to be cleared
  * @return Error Code
  */
-int varr_clear(struct void_array* varray) {
+inline int varr_clear(struct void_array* varray) {
     if (varray) {
         if (varray->value_free_fn) {
             for (VARR_SIZE_TYPE idx = 0; idx < varray->size; idx++) {
@@ -163,7 +163,7 @@ int varr_clear(struct void_array* varray) {
  * @param value_free_fn Function to be called when freeing special datatypes (Nullable)
  * @return Error Code
  */
-int varr_init(struct void_array* varray, VARR_SIZE_TYPE init_capacity, VARR_SIZE_TYPE value_size, void(*value_free_fn)(void*)) {
+inline int varr_init(struct void_array* varray, VARR_SIZE_TYPE init_capacity, VARR_SIZE_TYPE value_size, void(*value_free_fn)(void*)) {
     if (varray) {
         varray->value_bytes = (unsigned char*)calloc(value_size, init_capacity);
         varray->capacity = init_capacity;
@@ -181,7 +181,7 @@ int varr_init(struct void_array* varray, VARR_SIZE_TYPE init_capacity, VARR_SIZE
  *
  * @param varray_ptr Void Array of which the content is to be freed
  */
-void varr_free(void* varray_ptr) {
+inline void varr_free(void* varray_ptr) {
     struct void_array* varray = (struct void_array*)varray_ptr;
     if (varray->value_free_fn) {
         for (VARR_SIZE_TYPE idx = 0; idx < varray->size; idx++) {
