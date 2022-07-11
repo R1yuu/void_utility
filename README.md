@@ -1,10 +1,15 @@
 # USAGE
-These header files are meant to be a simple means of using datastructures in a C project.
-They are universally useable with any other C datatype and are well integrated with each other.
+These header files are meant to be a simple means of using datastructures in a C project.  
+They are universally useable with any other C datatype and are well integrated with each other.  
 All of the Header-Files Include DoxyGen Documentation which can and should be read before using them.
 
 Values and Keys always get copied into the structures and not assigned!
 Changing the value of the pointer given to the structure later on wont affect the contents of the structure!
+
+# TESTS
+Tests were compiled using:  
+`$ gcc -D _POSIX_C_SOURCE=200809L -pedantic -Wall -std=c99 -x c -o tests tests.c void_array.c void_dict.c`  
+However you can compile them using whichever C compiler and settings you prefer.
 
 # EXAMPLES
 ## VOID ARRAY
@@ -17,31 +22,31 @@ int main() {
 	struct void_array varray;
 	varr_init(&varray, 10, sizeof(double), NULL);
 
-	for (int i = 0; i < varray.capacity; i++) {
+    VARR_SIZE_TYPE cap = varray.capacity;
+
+	for (unsigned i = 0; i < cap; i++) {
 		double value = (i + 1) * 1.5;
-		varr_add(&varray, &value);
+		varr_add(&varray, &value, 1);
 	}
 
+    varr_remove(&varray, 2, 1);
 
-	printf("%f\n", varr_get(&varray, 6)); // 10.5
+	double values[5] = { -0.5, -1.0, -1.5, -2.0, -2.5 };
+	varr_add(&varray, values, 5);
+    
+	varr_remove(&varray, 6, 1);
 
-	// Values get pulled from the right at deletion
-	varr_remove(&varray, 6);
-
-	printf("%f\n", varr_get(&varray, 6)); // 12.0
+    varr_clear(&varray);
 
 	varr_free(&varray);
-
-	return 0;
 }
-
 ```
 
 ## VOID DICT
 ```c
 #include <stdio.h>
 
-#include "void_array.h"
+#include "void_dict.h"
 
 int main() {
 	struct void_dict vdict;
@@ -67,7 +72,6 @@ int main() {
 
 	return 0;
 }
-
 ```
 
 ## COMBINATION
@@ -87,7 +91,7 @@ int main() {
 		varr_init(&sub_array, 5, sizeof(double), NULL);
 		for (int j = 0; j < varr.capacity; j++) {
 			double value = (i + 1) * 1.5;
-			varr_add(&sub_array, &value);
+			varr_add(&sub_array, &value, 1);
 		}
 		vdict_add_pair(&vdict, &i, &sub_array);
 
@@ -102,7 +106,6 @@ int main() {
 
 	return 0;
 }
-
 ```
 
 
