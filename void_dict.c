@@ -1,3 +1,19 @@
+/*
+    Copyright (C) 2022  Andre Schneider
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License Version 2.1 as published by the Free Software Foundation.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License Version 2.1 for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License Version 2.1 along with this library; if not, 
+    write to <andre.schneider@outlook.at>.
+*/
 #include "void_dict.h"
 
 #include <stdlib.h>

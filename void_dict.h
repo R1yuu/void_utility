@@ -1,3 +1,19 @@
+/*
+    Copyright (C) 2022  Andre Schneider
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License Version 2.1 as published by the Free Software Foundation.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License Version 2.1 for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License Version 2.1 along with this library; if not, 
+    write to <andre.schneider@outlook.at>.
+*/
 #ifndef VD_VOID_DICT_H
 #define VD_VOID_DICT_H
 
@@ -6,14 +22,7 @@
 #include <string.h>
 
 /**
- * Every Return Code != 0 is an Error
- * The Error Codes are Xor'ed
- * If you want to check if a specific Error Code is included you 
- * can check be Xor'ing with VDICT_ERROR
- * 
- * Examples:
- * (VDICT_ERROR ^ VDICT_DICT_404) ^ VDICT_ERROR == VDICT_DICT_404
- * (VDICT_ERROR ^ VDICT_DICT_404 ^ VDICT_ZERO_KEY) ^ VDICT_ERROR ^ VDICT_ZERO_KEY == VDICT_DICT_404
+ * Error Codes
  */
 #define VDICT_SUCCESS              0
 #define VDICT_ERROR                1
@@ -111,7 +120,7 @@ int
 vdict_del_pair(struct void_dict* vdict, const void* key);
 
 /**
- * Clears Void Dict.\n 
+ * Clears Void Dict.
  * Calls vdict->value_free_fn on values if available.
  * 
  * @param vdict Void Dict to be cleared
@@ -134,7 +143,7 @@ int
 vdict_init(struct void_dict* vdict, size_t hash_pool, size_t key_size, size_t value_size, void(*value_free_fn)(void*));
 
 /**
- * Frees Content of Void Dict.\n 
+ * Frees Content of Void Dict.
  * Calls vdict->value_free_fn on values if available.
  *
  * @param vdict_ptr Void Dict of which the content is to be freed

@@ -1,11 +1,33 @@
+/*
+    Copyright (C) 2022  Andre Schneider
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License Version 2.1 as published by the Free Software Foundation.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License Version 2.1 for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License Version 2.1 along with this library; if not, 
+    write to <andre.schneider@outlook.at>.
+*/
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include <limits.h>
 
 #include "void_array.h"
 #include "void_dict.h"
 
 #define INIT_CAPACITY 5
+
 
 static void 
 void_array_test() 
@@ -20,7 +42,7 @@ void_array_test()
     }
 
     assert(varr_init(&varray, INIT_CAPACITY, sizeof(unsigned), NULL) == VARR_SUCCESS);
-    assert(varray.capacity == 5);
+    assert(varray.capacity == INIT_CAPACITY);
     assert(varray.size == 0);
     assert(varray.value_size == sizeof(unsigned));
     assert(varray.value_bytes != NULL);
@@ -60,8 +82,18 @@ void_array_test()
     assert(ret_value != *(unsigned*)varr_get(&varray, INIT_CAPACITY >> 1));
     printf("%25s%15s\n", "varr_remove - 1", "success");
 
+    unsigned fill = 69;
+    unsigned* fill_arr = malloc(varray.value_size * varray.capacity);
+    for (size_t i=0; i < varray.capacity; i++) {
+        memcpy(fill_arr + i, &fill, varray.value_size);
+    }
+    assert(varr_fill(&varray, 0, &fill, varray.capacity) == VARR_SUCCESS);
+    assert(!memcmp(varray.value_bytes, fill_arr, varray.value_size * varray.capacity));
+    free(fill_arr);
+    printf("%25s%15s\n", "varr_fill", "success");
+
     assert(varr_remove(&varray, INIT_CAPACITY >> 1, 2) == VARR_SUCCESS);
-    assert(varray.size == INIT_CAPACITY - 2);
+    assert(varray.size == varray.capacity - 2);
     assert(varray.capacity == INIT_CAPACITY + 1);
     printf("%25s%15s\n", "varr_remove - 2", "success");
 
@@ -85,7 +117,7 @@ void_array_test()
 static void
 void_dict_test() {
     struct void_dict vdict;
-    
+
     assert(vdict_init(&vdict, 7, sizeof(char) * 10, sizeof(double), NULL) == VDICT_SUCCESS);
     assert(vdict.hash_pool == 7);
     assert(vdict.key_size == sizeof(char) * 10);

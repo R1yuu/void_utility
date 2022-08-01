@@ -6,9 +6,10 @@ All of the Header-Files Include DoxyGen Documentation which can and should be re
 Values and Keys always get copied into the structures and not assigned!
 Changing the value of the pointer given to the structure later on wont affect the contents of the structure!
 
+
 # TESTS
 Tests were compiled using:  
-`$ gcc -D _POSIX_C_SOURCE=200809L -pedantic -Wall -std=c99 -x c -o tests tests.c void_array.c void_dict.c`  
+`gcc -D _POSIX_C_SOURCE=200809L -pedantic -Wall -std=c99 -x c -o tests tests.c void_array.c void_dict.c`  
 However you can compile them using whichever C compiler and settings you prefer.
 
 # EXAMPLES
@@ -109,5 +110,5 @@ int main() {
 ```
 
 
-# LICENSE - MIT
-See `LICENSE` file in the root directory of this repository
+# LICENSE - GNU LGPLv2.1
+See `LICENSE.txt` file in the root directory of this repository

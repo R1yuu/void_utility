@@ -1,17 +1,26 @@
+/*
+    Copyright (C) 2022  Andre Schneider
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License Version 2.1 as published by the Free Software Foundation.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License Version 2.1 for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License Version 2.1 along with this library; if not, 
+    write to <andre.schneider@outlook.at>.
+*/
 #ifndef VA_VOID_ARRAY_H
 #define VA_VOID_ARRAY_H
 
 #include <stdlib.h>
 
 /**
- * Every Return Code != 0 is an Error
- * The Error Codes are Xor'ed
- * If you want to check if a specific Error Code is included you 
- * can check be Xor'ing with VARR_ERROR
- * 
- * Examples:
- * (VARR_ERROR ^ VARR_ARRAY_404) ^ VARR_ERROR == VARR_ARRAY_404
- * (VARR_ERROR ^ VARR_ARRAY_404 ^ VARR_INDEX_OUT_OF_RANGE) ^ VARR_ERROR ^ VARR_INDEX_OUT_OF_RANGE == VARR_ARRAY_404
+ * Error Codes
  */
 #define VARR_SUCCESS                0
 #define VARR_ERROR                  1
@@ -22,60 +31,101 @@
  * Void Array Structure
  */
 struct void_array {
-    /** byte array of all stored values */
-    void* value_bytes;
-    /** amount of currently stored values */
-    size_t size; 
-    /** allocated memory of the array */
-    size_t capacity; 
-    /** size of values in bytes */
-    size_t value_size; 
-    /** free function for recursive freeing on each value */
-    void(*value_free_fn)(void*); 
+    void* value_bytes; /** byte array of all stored values */
+    unsigned long size; /** amount of currently stored values */
+    unsigned long capacity; /** allocated memory of the array */
+    unsigned long value_size; /** size of values in bytes */
+    void(*value_free_fn)(void*); /** free function for recursive freeing on each value */
 };
 
 
 /**
- * Doubles the memory size of a Void Array.
+ * Doubles allocated memory of `varray->value_bytes` for `doublings` times
+ * and increases `varray->capacity` accordingly.
  * 
  * @param varray Void Array to expand
  * @param doublings How often the capacity should be doubled
  */
 void 
-varr_expand(struct void_array* varray, size_t doublings);
+varr_expand(struct void_array* const varray, const unsigned long doublings);
 
 /**
- * Shrinks the memory size to the used size of a Void Array.
- * 
+ * Shrinks allocated memory of `varray->value_bytes` to `varray->size`
+ * and sets `varray->capacity` to `varray->size` accordingly.
+ *
  * @param varray Void Array to shrink
  */
 void 
-varr_shrink(struct void_array* varray);
+varr_shrink(struct void_array* const varray);
 
 /**
- * Copys given Data into Void Array.
+ * Copies `data` of length `n` onto the end of `varray->value_bytes`
+ * and increases `varray->size` and `varray->capacity` accordingly.
+ * 
+ * \param varray Void Array to add element to
+ * \param data Data to be copied into Void Array
+ * \param n Amount of data to be added
+ * \return Error Code
+ */
+int 
+varr_add(struct void_array* const varray, const void* const data, const unsigned long n);
+
+/**
+ * Copies `data` of length `n` to the index `idx` of `varray->value_bytes`,
+ * pushes potentially overlapping data of `varray->value_bytes` to
+ * the right and increases `varray->size` and `varray->capacity` accordingly.
  * 
  * @param varray Void Array to add element to
+ * @param idx Index to insert data at
  * @param data Data to be copied into Void Array
  * @param n Amount of data to be added
  * @return Error Code
  */
-int 
-varr_add(struct void_array* varray, void* data, size_t n);
+int
+varr_insert(struct void_array* const varray, const unsigned long idx, const void* const data, const unsigned long n);
 
 /**
- * Gets Element from Void Array at given index.
+ * Fills data in `varray->value_bytes` from `idx` to `idx + n` with 
+ * copies of `data` assumed to be of length `varray->value_size`.
+ * Overridden data is freed using `value_free_fn` if defined.
+ *
+ * \param varray Void Array to fill data
+ * \param idx Starting index to fill data at
+ * \param data Data copied to fill
+ * \param n Amount of data to replace
+ * \return Error Code
+ */
+int
+varr_fill(struct void_array* const varray, const unsigned long idx, void* const data, const unsigned long n);
+
+/**
+ * Replaces data in `varray->value_bytes` from `idx` to `idx + n` 
+ * with `data` of length `n`.
+ * Overridden data is freed using `value_free_fn` if defined.
+ *
+ * @param varray Void Array to fill data
+ * @param idx Starting index to fill data at
+ * @param data Data copied to fill
+ * @param n Amount of data to replace
+ * @return Error Code
+ */
+int 
+varr_replace(struct void_array* const varray, const unsigned long idx, void* const data, const unsigned long n);
+
+/**
+ * Returns pointer to data of internal array on location `idx`.
  * 
  * @param varray Void Array to get element from
  * @param idx Index of the Element
  * @return Pointer to Element (NULL if idx out of range)
  */
-void* 
-varr_get(const struct void_array* varray, size_t idx);
+const void* 
+varr_get(const struct void_array* const varray, const unsigned long idx);
 
 /**
- * Removes Element from Void Array at given index.\n 
- * Calls varray->value_free_fn on value if available.
+ * Deletes data from `idx` to `idx + n` from `varray->value_bytes`
+ * and decreases `varray->size` accordingly.
+ * Deleted data is freed using `value_free_fn` if defined.
  * 
  * @param varray Void Array to delete element from
  * @param idx Index of Element to be removed
@@ -83,20 +133,23 @@ varr_get(const struct void_array* varray, size_t idx);
  * @return Error Code
  */
 int 
-varr_remove(struct void_array* varray, size_t idx, size_t n);
+varr_remove(struct void_array* const varray, const unsigned long idx, const size_t n);
 
 /**
- * Clears Void Array.\n 
- * Calls varray->value_free_fn on values if available.
+ * Deletes all data from `varray->value_bytes` and sets
+ * `varray->size` to 0.
+ * Deleted data is freed using `value_free_fn` if defined.
  * 
  * @param varray Void Array to be cleared
  * @return Error Code
  */
 int 
-varr_clear(struct void_array* varray);
+varr_clear(struct void_array* const varray);
 
 /**
- * Initializes a Void Array.
+ * Initializes a `void_array` structure.
+ * If stored data doesn't need to be freed in any specific
+ * manner (ie. non-pointers), `value_free_fn` is to be `NULL`.
  * 
  * @param varray Void Array to be initialized
  * @param init_capacity Initial Memory Capacity of the Void Array
@@ -105,16 +158,18 @@ varr_clear(struct void_array* varray);
  * @return Error Code
  */
 int 
-varr_init(struct void_array* varray, size_t init_capacity, size_t value_size, void(*value_free_fn)(void*));
+varr_init(struct void_array* const varray, const unsigned long init_capacity, const size_t value_size, void(* const value_free_fn)(void*));
 
 /**
- * Frees Content of Void Arrays.\n 
- * Calls varray->value_free_fn on values if available.
+ * Assumes `varray_ptr` is of type `struct void_array*`.
+ * Frees all allocated data and sets all members of the `void_array`
+ * to 0.
+ * Deleted data is freed using `value_free_fn` if defined.
  *
  * @param varray_ptr Void Array of which the content is to be freed
  */
 void 
-varr_free(void* varray_ptr);
+varr_free(void* const varray_ptr);
 
 
 #endif /* VA_VOID_ARRAY_H */
